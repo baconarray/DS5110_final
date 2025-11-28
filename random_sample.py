@@ -3,17 +3,17 @@ import pandas as pd
 import random
 
 
-def random_sample(df, filetype, size):
+def random_sample(df, subtype, size):
     '''
     input:
         df - pandas df (df of the complete Google Drive index)
-        filetype - string (".txt",".pdf", etc)
+        subtype - string ("txt","pdf", etc)
         size - integer (size of sample)
     output:
         df - pandas df 
     '''
     
-    df = df[df['Filetype'] == filetype].copy() #create df of that filetype
+    df = df[df['subtype'] == subtype].copy() #create df of that subtype
     df.reset_index(drop = True, inplace=True) #reset the index to 0 - n
     if len(df) < size:
         size = len(df)-1 #reduce sample size to all rows, in necessary
@@ -27,7 +27,7 @@ def random_sample(df, filetype, size):
     df = df.loc[sample_index] #define df based on sample index positions
     df.reset_index(drop = True, inplace=True)
     sample_number = random.randint(0,1000000) #generate identifier for sample
-    df.to_csv(f'filetype{filetype} sample#{sample_number}.csv', index = False) #name the sample
+    df.to_csv(f'subtype {subtype} sample#{sample_number}.csv', index = False) #name the sample
     
     return df
     '''
@@ -41,9 +41,9 @@ def main():
 
     filename = "Spotify_Youtube_Locations.csv"
     df = pd.read_csv(filename)
-    filetype = ".txt"
+    subtype = "txt"
     size = 50
 
-    random_sample(df, filetype, size)
+    random_sample(df, subtype, size)
     
 main()
