@@ -6,7 +6,7 @@ import random
 def random_sample(df, subtype, size):
     '''
     input:
-        df - pandas df (df of the complete Google Drive index)
+        df - pandas df (df of the Google Drive files index)
         subtype - string ("txt","pdf", etc)
         size - integer (size of sample)
     output:
@@ -36,14 +36,3 @@ def random_sample(df, subtype, size):
         question: does each sample corpus exhibit the same clustering?
     
     '''
-
-def main():
-
-    filename = "Spotify_Youtube_Locations.csv"
-    df = pd.read_csv(filename)
-    subtype = "txt"
-    size = 50
-
-    random_sample(df, subtype, size)
-    
-main()
