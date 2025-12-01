@@ -3,6 +3,7 @@ import pandas as pd
 import random
 
 
+
 def random_sample(df, subtype, size):
     '''
     input:
@@ -36,3 +37,13 @@ def random_sample(df, subtype, size):
         question: does each sample corpus exhibit the same clustering?
     
     '''
+
+def main():
+
+    filename = "unique_files.csv"  
+    unique_files = pd.read_csv(filename)
+    df_sample = random_sample(unique_files,'pdf',5)
+    
+main()
+
+

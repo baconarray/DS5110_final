@@ -6,6 +6,10 @@ import io
 import os
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
+import time
+import random
+
+time.sleep(random.randint(1, 2))
 
 def pdf_reader(google_id):
         
@@ -30,38 +34,39 @@ def pdf_reader(google_id):
         text = page.extract_text()
         raw_string = raw_string + text # concat the page's text to a string
     raw_string = raw_string.lower() #lowercase
-    string_list = []
-    string_list.append(raw_string.split()) #get rid off all white space (split returns list)
-    raw_string = string_list[0] #start with 1st string in list
-    for l in string_list[1:]:
-        raw_string = raw_string + ' ' + l #concat back to 1 string
+    raw_list = raw_string.split() #get rid off all white space (split returns list)
+    if len(raw_list) > 0:
+        raw_string = raw_list[0]
+        for l in raw_list[1:]:
+            raw_string = raw_string + ' ' + l #concat back to 1 string
+    else:
+        raw_string = ''
 
+
+    print(raw_string)
     return raw_string
 
-def word_cleaner(raw_string):
+def word_cleaner(raw_string, stops_df):
     nlp = spacy.load("en_core_web_sm") #load spacy
     tokens = nlp(raw_string) #create lemmas (tokens)
 
     token_list = []
     for t in tokens: #iterate over tokens
-        token_list.append(s.lemma_) #add the lemmas to a list
+        token_list.append(t.lemma_) #add the lemmas to a list
 
     clean_words = []
-    for l in lemmas:
+    for l in token_list:
         if l.isalnum() == True: #add only the alpha-numeric strings
             clean_words.append(l)
-        if l == '$':
-            clean_words.append(l)
 
-    df = pd.DataFrame({'clean_words':clean_words}) # put them in a df
-    df['stops'] = df['clean_words'].isin(stops['words']) # label stopwords
-    df = df[df['stops'] == False].copy() # copy non-stopwords
-    df = df.drop('stops', axis=1) # drop the boolean column
-    counts = df['clean_words'].value_counts() # TF(t) = in-document occurrences
-    df['NF'] = df['clean_words'].map(counts/len(df)) # NF = TF(t)/len(d)
-    df = df.drop_duplicates() #drop duplicates
-    print(df) # print the df of lemmas
-    return df_ofSpacyTokens
+    clean_df = pd.DataFrame({'clean_words':clean_words}) # put them in a df
+    clean_df['stops'] = clean_df['clean_words'].isin(stops_df['words']) # label stopwords
+    clean_df = clean_df[clean_df['stops'] == False].copy() # copy non-stopwords
+    clean_df = clean_df.drop('stops', axis=1) # drop the boolean column
+    counts = clean_df['clean_words'].value_counts() # TF(t) = in-document occurrences
+    clean_df['NF'] = clean_df['clean_words'].map(counts/len(clean_df)) # NF = TF(t)/len(d)
+    clean_df = clean_df.drop_duplicates() #drop duplicates
+    return clean_df
 
 def sample_corpus(df_sample):
     '''
@@ -71,19 +76,7 @@ def sample_corpus(df_sample):
         df
             - in feature vector form
             - columns = terms in corpus
-            - rows = documents, IDF of each term
-
-    turn the id column of the sample df into a single list
-    method reads in the contents of each file as a list of strings
-        if it's a pdf:
-            call pdf method
-                read in all the pages to a PdfReader object
-                clean and concatenate to 1 string
-        convert to SpaCy tokens
-        read into df
-        add columns of: TF, NF, and Occurrence = 1 columns
-        remove duplicate columns
-        add the df to a list of dfs: corpus_list = [df[0], df[1]... df[n]]
+            - rows = documents, NF*IDF of each term
         corpus
             concatenates each df to a single df: corpus_df
                 value_count the occurence column = # documents containing t
@@ -123,18 +116,28 @@ def sample_corpus(df_sample):
             pass
         else:
             pass
-    #key1, val1 = next(iter(string_dict.items()))
-    #print(key1,val1)
-    #print(string_dict)
+        time.sleep(random.randint(1,2)) #pause to avoid being flagged by Google
+
+    print(string_dict)
+
+    stops = 'Stopwords.txt'
+    with open(stops,'r') as file:
+        stops = file.read()
+    stops = stops.split() # list of stop words
+    stops_df = pd.DataFrame({'words':stops}) # df of stop words
+
+    # use string_dict {google_id:raw_string} to make token_dictionary {google_id: clean_df} pairs
     token_dict = {}
     for k,v in string_dict.items():
-        token_df = word_cleaner(v)
-        token_dict[k] = token_df
+        token_dict[k] = word_cleaner(v, stops_df)
+
+    print(token_dict)
         
     # now the dictionary is {google_id: raw_string}
     # pass the raw_strings to the word_cleaner function
     # word cleaner uses pandas: removes fillers, calculates NF, TF return df
-    # re-define dictionary as {google_id: clean_df} pairs    
+    # re-define dictionary as {google_id: clean_df} pairs
+    
     # pass that dictionary to the corpus_builder function
     # corpus used to calculate IDF
     # add IDF column to {google_id: clean_df} pairs
@@ -148,11 +151,10 @@ def sample_corpus(df_sample):
 
 def main():
 
-    filename = "subtype pdf sample#342783.csv"  
+    filename = "subtype pdf sample#661174.csv"  
     df_sample = pd.read_csv(filename)
 
     df_corpus = sample_corpus(df_sample)
-    #print(df_corpus)
-    
+
 main()
     
