@@ -1,15 +1,13 @@
-import pandas as pd
-from PyPDF2 import PdfReader
-import spacy
+from dotenv import load_dotenv
+from googleapiclient.discovery import build
 import pandas as pd
 import io
 import os
-from dotenv import load_dotenv
-from googleapiclient.discovery import build
 import time
 import random
-
-time.sleep(random.randint(1, 2))
+import spacy
+from PyPDF2 import PdfReader
+import win32com.client as win32
 
 def pdf_reader(google_id):
         
@@ -20,7 +18,6 @@ def pdf_reader(google_id):
         raise ValueError("Please set GOOGLE_DRIVE_API_KEY")
 
     service = build('drive', 'v3', developerKey=API_KEY) #create service object
-    folder_id = '12qMZKDEWn71JrN8Het5-a_NUWV0eE1ZF'
 
     file = service.files().get_media(fileId=google_id) #select the file
     buffer = io.BytesIO() #create a memory object
@@ -42,9 +39,40 @@ def pdf_reader(google_id):
     else:
         raw_string = ''
 
-
-    print(raw_string)
     return raw_string
+
+
+def doc_reader(google_id):
+        
+    #Load Google Drive API Key from .env file
+    load_dotenv()
+    API_KEY = os.getenv('GOOGLE_DRIVE_API_KEY')
+    if not API_KEY:
+        raise ValueError("Please set GOOGLE_DRIVE_API_KEY")
+
+    service = build('drive', 'v3', developerKey=API_KEY) #create service object
+
+    file = service.files().get_media(fileId=google_id) #select the file
+    buffer = io.BytesIO() #create a memory object
+    buffer.write(file.execute()) #write the file into the buffer
+    buffer.seek(0) #re-set the buffer to [0]
+
+    word = win32.gencache.EnsureDispatch('Word.Application') #create windows COM object
+    word.Visible = False  # don't make word visible
+    doc = word.Documents.Open(buffer) #read in the memory object
+    
+    raw_string = doc.Range().Text #define string as .Text(unformatted) Range (whole doc) object
+    raw_string = raw_string.lower() #lowercase
+    raw_list = raw_string.split() #get rid off all white space (split returns list)
+    if len(raw_list) > 0:
+        raw_string = raw_list[0]
+        for l in raw_list[1:]:
+            raw_string = raw_string + ' ' + l #concat back to 1 string
+    else:
+        raw_string = ''
+
+    return raw_string
+
 
 def word_cleaner(raw_string, stops_df):
     nlp = spacy.load("en_core_web_sm") #load spacy
@@ -77,42 +105,21 @@ def sample_corpus(df_sample):
             - in feature vector form
             - columns = terms in corpus
             - rows = documents, NF*IDF of each term
-        corpus
-            concatenates each df to a single df: corpus_df
-                value_count the occurence column = # documents containing t
-                drop duplicates
-                IDF = 1 + log10(len(random_sample)/# docs containing t)
-                divide by len(random_sample) = # documents
-                adds value_counts column to corpus df
-        iterate over corpus_list
-            add the corpus_df['IDF'] column to each df
-            add column of NF*IDF
-            drop all other columns
-        now every df term,NF*IDF columns
-        now transpose each dfs use .T - they are now in feature vector form
-        concatenate the dfs, use .fillna(0)
-        now the vectors are combined into 1 df
-        
-
-        send that 2-d df to corpus_cluster method which will use KMeans
-    
     '''
     id_list = df_sample['id'].to_list()
     string_dict = {}
     
-    # pass the files in the id list 1 at a time to the reader functions:
+    # pass the files 1 at a time to the reader functions:
     for i in range(len(df_sample)):
-        if df_sample['subtype'].iloc[i] == 'msword':
-            pass
-        if df_sample['subtype'].iloc[i] == 'pdf':
+        if df_sample['extension'].iloc[i] == 'pdf':
             string_dict[df_sample['id'].iloc[i]] = pdf_reader(df_sample['id'].iloc[i])
-        if df_sample['subtype'].iloc[i] == 'jpeg':
+        if df_sample['extension'].iloc[i] == 'doc':
+            string_dict[df_sample['id'].iloc[i]] = doc_reader(df_sample['id'].iloc[i])
+        if df_sample['extension'].iloc[i] == 'docx':
             pass
-        if df_sample['subtype'].iloc[i] == 'vnd.ms-excel':
+        if df_sample['extension'].iloc[i] == 'ppt':
             pass
-        if df_sample['subtype'].iloc[i] == 'vnd.openxmlformats-officedocument.wordprocessingml.document':
-            pass
-        if df_sample['subtype'].iloc[i] == 'vnd.ms-powerpoint':
+        if df_sample['extension'].iloc[i] == 'pptx':
             pass
         else:
             pass
@@ -151,10 +158,31 @@ def sample_corpus(df_sample):
 
 def main():
 
-    filename = "subtype pdf sample#661174.csv"  
+    filename = "extension doc sample#655938"
+    filename = "extension docx sample#360065"
+    filename = "extension pdf sample#324717"
     df_sample = pd.read_csv(filename)
 
     df_corpus = sample_corpus(df_sample)
+    '''
+        corpus
+            concatenates each df to a single df: corpus_df
+                value_count the occurence column = # documents containing t
+                drop duplicates
+                IDF = 1 + log10(len(random_sample)/# docs containing t)
+                divide by len(random_sample) = # documents
+                adds value_counts column to corpus df
+        iterate over corpus_list
+            add the corpus_df['IDF'] column to each df
+            add column of NF*IDF
+            drop all other columns
+        now every df term,NF*IDF columns
+        now transpose each dfs use .T - they are now in feature vector form
+        concatenate the dfs, use .fillna(0)
+        now the vectors are combined into 1 df
+        
 
+        send that 2-d df to corpus_cluster method which will use KMeans
+    '''
 main()
     
