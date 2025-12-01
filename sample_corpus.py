@@ -35,12 +35,32 @@ def pdf_reader(google_id):
     raw_string = string_list[0] #start with 1st string in list
     for l in string_list[1:]:
         raw_string = raw_string + ' ' + l #concat back to 1 string
-    print(raw_string)
-    
+
     return raw_string
 
 def word_cleaner(raw_string):
-    
+    nlp = spacy.load("en_core_web_sm") #load spacy
+    tokens = nlp(raw_string) #create lemmas (tokens)
+
+    token_list = []
+    for t in tokens: #iterate over tokens
+        token_list.append(s.lemma_) #add the lemmas to a list
+
+    clean_words = []
+    for l in lemmas:
+        if l.isalnum() == True: #add only the alpha-numeric strings
+            clean_words.append(l)
+        if l == '$':
+            clean_words.append(l)
+
+    df = pd.DataFrame({'clean_words':clean_words}) # put them in a df
+    df['stops'] = df['clean_words'].isin(stops['words']) # label stopwords
+    df = df[df['stops'] == False].copy() # copy non-stopwords
+    df = df.drop('stops', axis=1) # drop the boolean column
+    counts = df['clean_words'].value_counts() # TF(t) = in-document occurrences
+    df['NF'] = df['clean_words'].map(counts/len(df)) # NF = TF(t)/len(d)
+    df = df.drop_duplicates() #drop duplicates
+    print(df) # print the df of lemmas
     return df_ofSpacyTokens
 
 def sample_corpus(df_sample):
@@ -103,8 +123,14 @@ def sample_corpus(df_sample):
             pass
         else:
             pass
-    key1, val1 = next(iter(string_dict.items()))
-    print(key1,val1)
+    #key1, val1 = next(iter(string_dict.items()))
+    #print(key1,val1)
+    #print(string_dict)
+    token_dict = {}
+    for k,v in string_dict.items():
+        token_df = word_cleaner(v)
+        token_dict[k] = token_df
+        
     # now the dictionary is {google_id: raw_string}
     # pass the raw_strings to the word_cleaner function
     # word cleaner uses pandas: removes fillers, calculates NF, TF return df
@@ -126,7 +152,7 @@ def main():
     df_sample = pd.read_csv(filename)
 
     df_corpus = sample_corpus(df_sample)
-    print(df_corpus)
+    #print(df_corpus)
     
 main()
     
