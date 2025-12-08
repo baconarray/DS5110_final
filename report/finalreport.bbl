@@ -5,19 +5,21 @@
   \providecommand{\doi}[1]{doi: #1}\else
   \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
 
-\bibitem[1(2025)]{1}
-Title 23: Transportation, 2025.
-\newblock URL
-  \url{https://legislature.maine.gov/statutes/23/title23ch0sec0.html}.
-
-\bibitem[2(2025)]{2}
-Maine port authority, 2025.
+\bibitem[Authority(2025)]{2}
+Maine~Port Authority.
+\newblock Maine port authority, 2025.
 \newblock URL \url{https://www.maineports.com}.
 
 \bibitem[Google(2021)]{3}
 Google.
 \newblock Google api client, 10 2021.
 \newblock URL \url{https://github.com/googleapis/google-api-python-client}.
+
+\bibitem[Legislature(2025)]{1}
+Maine Legislature.
+\newblock Title 23: Transportation, 2025.
+\newblock URL
+  \url{https://legislature.maine.gov/statutes/23/title23ch0sec0.html}.
 
 \bibitem[Rebello(2023)]{4}
 Sanchia Rebello.
