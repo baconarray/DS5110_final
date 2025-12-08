@@ -1,0 +1,27 @@
+\begin{thebibliography}{4}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[1(2025)]{1}
+Title 23: Transportation, 2025.
+\newblock URL
+  \url{https://legislature.maine.gov/statutes/23/title23ch0sec0.html}.
+
+\bibitem[2(2025)]{2}
+Maine port authority, 2025.
+\newblock URL \url{https://www.maineports.com}.
+
+\bibitem[Google(2021)]{3}
+Google.
+\newblock Google api client, 10 2021.
+\newblock URL \url{https://github.com/googleapis/google-api-python-client}.
+
+\bibitem[Rebello(2023)]{4}
+Sanchia Rebello.
+\newblock Baking ratios, 12 2023.
+\newblock URL \url{https://thelittleshine.com/baking-ratios/}.
+
+\end{thebibliography}
