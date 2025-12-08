@@ -7,17 +7,9 @@ import time
 import random
 import spacy
 from PyPDF2 import PdfReader
-import win32com.client as win32
+import docx2txt
 
-def pdf_reader(google_id):
-        
-    #Load Google Drive API Key from .env file
-    load_dotenv()
-    API_KEY = os.getenv('GOOGLE_DRIVE_API_KEY')
-    if not API_KEY:
-        raise ValueError("Please set GOOGLE_DRIVE_API_KEY")
-
-    service = build('drive', 'v3', developerKey=API_KEY) #create service object
+def pdf_reader(google_id, service):
 
     file = service.files().get_media(fileId=google_id) #select the file
     buffer = io.BytesIO() #create a memory object
@@ -42,26 +34,14 @@ def pdf_reader(google_id):
     return raw_string
 
 
-def doc_reader(google_id):
+def docx_reader(google_id, service):
         
-    #Load Google Drive API Key from .env file
-    load_dotenv()
-    API_KEY = os.getenv('GOOGLE_DRIVE_API_KEY')
-    if not API_KEY:
-        raise ValueError("Please set GOOGLE_DRIVE_API_KEY")
-
-    service = build('drive', 'v3', developerKey=API_KEY) #create service object
-
     file = service.files().get_media(fileId=google_id) #select the file
     buffer = io.BytesIO() #create a memory object
     buffer.write(file.execute()) #write the file into the buffer
     buffer.seek(0) #re-set the buffer to [0]
 
-    word = win32.gencache.EnsureDispatch('Word.Application') #create windows COM object
-    word.Visible = False  # don't make word visible
-    doc = word.Documents.Open(buffer) #read in the memory object
-    
-    raw_string = doc.Range().Text #define string as .Text(unformatted) Range (whole doc) object
+    raw_string = docx2txt.process(buffer)
     raw_string = raw_string.lower() #lowercase
     raw_list = raw_string.split() #get rid off all white space (split returns list)
     if len(raw_list) > 0:
@@ -73,8 +53,7 @@ def doc_reader(google_id):
 
     return raw_string
 
-
-def word_cleaner(raw_string, stops_df):
+def word_cleaner(google_id, raw_string, stops_df):
     nlp = spacy.load("en_core_web_sm") #load spacy
     tokens = nlp(raw_string) #create lemmas (tokens)
 
@@ -84,7 +63,7 @@ def word_cleaner(raw_string, stops_df):
 
     clean_words = []
     for l in token_list:
-        if l.isalnum() == True: #add only the alpha-numeric strings
+        if l.isalpha() == True and len(l) > 1: #add only whole words
             clean_words.append(l)
 
     clean_df = pd.DataFrame({'clean_words':clean_words}) # put them in a df
@@ -93,29 +72,37 @@ def word_cleaner(raw_string, stops_df):
     clean_df = clean_df.drop('stops', axis=1) # drop the boolean column
     counts = clean_df['clean_words'].value_counts() # TF(t) = in-document occurrences
     clean_df['NF'] = clean_df['clean_words'].map(counts/len(clean_df)) # NF = TF(t)/len(d)
+    clean_df['id'] = [google_id] * len(clean_df)
+    clean_df['document count'] = 1
     clean_df = clean_df.drop_duplicates() #drop duplicates
     return clean_df
 
-def sample_corpus(df_sample):
+def tokenizer(filename):
     '''
     input:
-        random_sample - df output by random_sample()
+        filename - name of file containing df sample
     output:
-        df
-            - in feature vector form
-            - columns = terms in corpus
-            - rows = documents, NF*IDF of each term
+        dictionary - {google id: tokenized document as df} pairs
     '''
+    
+    load_dotenv() #Load Google Drive API Key from .env file
+    API_KEY = os.getenv('GOOGLE_DRIVE_API_KEY')
+    if not API_KEY:
+        raise ValueError("Please set GOOGLE_DRIVE_API_KEY")
+
+    service = build('drive', 'v3', developerKey=API_KEY) #create service object
+
+    df_sample = pd.read_csv(filename) #load sample df
     id_list = df_sample['id'].to_list()
     string_dict = {}
     
     # pass the files 1 at a time to the reader functions:
     for i in range(len(df_sample)):
         if df_sample['extension'].iloc[i] == 'pdf':
-            string_dict[df_sample['id'].iloc[i]] = pdf_reader(df_sample['id'].iloc[i])
-        if df_sample['extension'].iloc[i] == 'doc':
-            string_dict[df_sample['id'].iloc[i]] = doc_reader(df_sample['id'].iloc[i])
+            string_dict[df_sample['id'].iloc[i]] = pdf_reader(df_sample['id'].iloc[i],service)
         if df_sample['extension'].iloc[i] == 'docx':
+            string_dict[df_sample['id'].iloc[i]] = docx_reader(df_sample['id'].iloc[i],service)
+        if df_sample['extension'].iloc[i] == 'doc':
             pass
         if df_sample['extension'].iloc[i] == 'ppt':
             pass
@@ -123,9 +110,7 @@ def sample_corpus(df_sample):
             pass
         else:
             pass
-        time.sleep(random.randint(1,2)) #pause to avoid being flagged by Google
-
-    print(string_dict)
+        time.sleep(random.randint(5,10)) #pause to avoid being flagged by Google
 
     stops = 'Stopwords.txt'
     with open(stops,'r') as file:
@@ -133,56 +118,42 @@ def sample_corpus(df_sample):
     stops = stops.split() # list of stop words
     stops_df = pd.DataFrame({'words':stops}) # df of stop words
 
-    # use string_dict {google_id:raw_string} to make token_dictionary {google_id: clean_df} pairs
+    # use word_cleaner use string_dict {google_id:raw_string}
+    # to make token_dictionary {google_id: clean_df} pairs
+    # word cleaner removes fillers, calculates NF, returns dfs
     token_dict = {}
     for k,v in string_dict.items():
-        token_dict[k] = word_cleaner(v, stops_df)
+        token_dict[k] = word_cleaner(k, v, stops_df)
 
-    print(token_dict)
-        
-    # now the dictionary is {google_id: raw_string}
-    # pass the raw_strings to the word_cleaner function
-    # word cleaner uses pandas: removes fillers, calculates NF, TF return df
-    # re-define dictionary as {google_id: clean_df} pairs
-    
-    # pass that dictionary to the corpus_builder function
-    # corpus used to calculate IDF
-    # add IDF column to {google_id: clean_df} pairs
-    # reduce clean_dfs to 2 columns: word, IDF*NF
-    # concat to 1 df, transpose, run KMeans algo
-    
+    return token_dict
 
 
-    return string_dict
+def token_saver(token_dict,filename):
+    '''
+    input: 
+    '''
+
+    tokenized_sample_df = pd.concat(token_dict.values(), ignore_index=True)    
+    tokenized_sample_df.to_csv(f'tokenized {filename}', index = False)
+    return tokenized_sample_df
 
 
 def main():
 
-    filename = "extension doc sample#655938"
-    filename = "extension docx sample#360065"
-    filename = "extension pdf sample#324717"
-    df_sample = pd.read_csv(filename)
-
-    df_corpus = sample_corpus(df_sample)
-    '''
-        corpus
-            concatenates each df to a single df: corpus_df
-                value_count the occurence column = # documents containing t
-                drop duplicates
-                IDF = 1 + log10(len(random_sample)/# docs containing t)
-                divide by len(random_sample) = # documents
-                adds value_counts column to corpus df
-        iterate over corpus_list
-            add the corpus_df['IDF'] column to each df
-            add column of NF*IDF
-            drop all other columns
-        now every df term,NF*IDF columns
-        now transpose each dfs use .T - they are now in feature vector form
-        concatenate the dfs, use .fillna(0)
-        now the vectors are combined into 1 df
+    docx_list = [
+        'docx 50 99.csv',
+        'docx 100 149.csv',
+        'docx 150 199.csv',
+        'docx 200 249.csv',  
+        'docx 250 299.csv',     
+        'docx 300 349.csv',     
+        'docx 350 399.csv',
+        'docx 400 449.csv'
+        ]
         
-
-        send that 2-d df to corpus_cluster method which will use KMeans
-    '''
+    for i in docx_list:
+        token_dict = tokenizer(i) #returns dictionary of {google id: tokenized document df} pairs
+        tokenized_sample_df = token_saver(token_dict,i)
+        
 main()
     
