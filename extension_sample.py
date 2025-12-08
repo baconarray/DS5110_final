@@ -32,7 +32,7 @@ def main():
     df_sample = extension_sample(unique_files,'docx')
     #df_sample = extension_sample(unique_files,'pdf')
 
-    
+
 main()
 
 

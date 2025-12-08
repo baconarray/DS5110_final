@@ -70,4 +70,18 @@ def main():
     vector_df = vector_merger(corpus_df,vector_dict)
     vector_df.to_csv('vectorized docx corpus.csv')
 
+    '''
+    ********* After the fact method to eliminate duplicats *************
+    add file name to vector_df from unique_files.csv
+    elimnated duplicates on 'name'
+    '''
+    filename = "unique_files.csv"
+    unique_files = pd.read_csv(filename)
+    docx_df = extension_sample(unique_files,'docx')
+    docx_df = docx_df.drop_duplicates(subset = 'name')
+    docx_df = docx_df['id','name']
+    docx_df.to_csv(f'unique_{extension}_files.csv', index=False)
+    
+    
+
 main()

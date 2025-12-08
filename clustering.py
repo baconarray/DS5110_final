@@ -48,7 +48,7 @@ def main():
 
     vector_csv = 'vectorized docx corpus.csv'
     #elbow_graph(vector_csv)
-    K = 30
+    K = 170
     cluster_indexer(vector_csv,K)
 
 main()
