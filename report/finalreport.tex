@@ -21,7 +21,7 @@
 \usepackage{natbib}
 
 \title{DS5110 Final Project}
-\author{Team D.A.D.S.~-- Tyler Beaulieu, Tim Paylor}
+\author{Team D.A.D.S. - Tyler Beaulieu, Tim Paylor}
 
 \begin{document}
 \maketitle
@@ -30,15 +30,15 @@
 \setlength{\parindent}{15pt}
 
 \begin{abstract}
-We will be working with the Maine Port Authority to analyze their current data storage and share insights on the types of files they have and how they are organized. Our goal is to use our analysis to make their data more accessible and searchable.
+We will be working with the Maine Port Authority to analyse their current data storage and share insights on the types of files they have and how they are organised. Our goal is to use our analysis to make their data more accessible and searchable.
 \end{abstract}
 
 \section{Introduction}
 The \href{https://www.maineports.com/}{Maine Port Authority} works in coordination with the Maine Department of Transportation in acquiring, financing, constructing, and operating any marine port terminal facility within the state of Maine.\cite{1} They operate three major ports in Portland, Searsport, and Eastport.\cite{2}
 
-Important documentation for the Port Authority is stored on a SharePoint drive. This drive has become increasingly disorganized over the years. The client is looking for assistance in making their data more organized and accessible. 
+Important documentation for the Port Authority is stored on a SharePoint drive. This drive has become increasingly disorganised over the years. The client is looking for assistance in making their data more organised and accessible. 
 
-Our first goal is to analyze the data as it exists today to help formulate a path forward. We'll use text mining and clustering techniques to find similar types of documents. Our secondary goal was to build a standard operating procedure to better name files moving forward.
+Our first goal is to analyse the data as it exists today to help formulate a path forward. We'll use text mining and clustering techniques to find similar types of documents. Our secondary goal was to build a standard operating procedure to better name files moving forward.
 
 \section{Data Processing}
 
@@ -47,7 +47,7 @@ Instead of working with the contents of their full SharePoint drive, we were giv
 
 We used the Google Drive API for Python to pull data about the files from Google Drive.\cite{3} We used it to recursively go through folders in the Drive and extract metadata. We retrieve the file ID, filename, file type, file size, file path, and parent folder name. This was then stored in a Pandas DataFrame. 
 
-We determined that we were working with 8672 files inside 653 folders. Looking at file types, we found that the files were 78\% documents and 22\% images (as seen in Figure {\ref{fig:typechart}}). 
+We determined that we were working with 8672 files inside 653 folders. Looking at file types, we found that the files were 78\% documents and 22\% images (as seen in Figure \ref{fig:typechart}). 
 
 \begin{figure}[H]
 \centering
@@ -56,7 +56,7 @@ We determined that we were working with 8672 files inside 653 folders. Looking a
 Proportion of document and image file types.
 \end{figure}
 
-The most popular document types were Word documents, PDF files, and Excel worksheets (as seen in Figure {\ref{fig:doctypes}}). Word documents made up over half of the non-image files in the drive. 
+The most popular document types were Word documents, PDF files, and Excel worksheets (as seen in Figure \ref{fig:doctypes}). Word documents made up over half of the non-image files in the drive. 
 
 \begin{figure}[H]
 \centering
@@ -66,54 +66,161 @@ Proportion of document types.
 \end{figure}
 
 \subsection{Duplicates}
-Now that we have our metadata, we can check for duplicate files in the dataset. We made a copy of our DataFrame with just the filename, file size, and file type columns. Then we eliminated duplicate rows. From this we found that there were 3202 unique files of 8672 total files. When we looked at folders, we found 257 unique folder names of 653 total folders.
+Now that we have our metadata, we can check for duplicate files in the dataset. We made a copy of our DataFrame with just the filename, file size, and file type columns. Then we eliminated duplicate rows. From this, we found that there were 3202 unique files of 8672 total files. When we looked at folders, we found 257 unique folder names of 653 total folders.
 
-Next we checked for duplicate folders. We created a DataFrame of folder names, summed up the size of all files insides, and counted the number of documents and images present. Then we eliminated duplicate rows. From this we discover 89 folders with that have a duplicate in the system. Most of them appear to be from the CruiseMaine directories.
+Next, we checked for duplicate folders. We created a DataFrame of folder names, summed up the size of all files insides, and counted the number of documents and images present. Then we eliminated duplicate rows. From this, we discover 89 folders that have a duplicate in the system. Most of them appear to be from the CruiseMaine directories.
 
-\textbf{Deliverable:} From this analysis, we will be able to provide the client a list of duplicate files and folders.
+\textbf{Deliverable:} From this analysis, we will be able to provide the client with a list of duplicate files and folders.
 
 \subsection{Data Preparation}
-Using our new DataFrame of unique files, we have a directory upon which we can begin our analysis using machine learning.
+Using our new DataFrame of unique files, we have a directory upon which we can begin our analysis using machine learning. Metadata analysis can be found in the GitHub repository under the filename \texttt{metadata\_workbook.ipynb. }\cite{5}
 
 \section{Clustering}
 \subsection{Introduction to Clustering}
-Our goal is to group documents by finding common words between them. This starts with text mining. Files are opened, and the text of each document is simplified to a recipe of words. In this form, the relative proportions of words are like the proportions of ingredients in baked goods (as seen in Figure {\ref{fig:bakery}}). More of one word and less of another word could help point us towards the type of document being analysed. 
+Our goal is to group documents by finding common words between them. This starts with text mining. Files are opened, and the text of each document is simplified to a recipe of words. In this form, the relative proportions of words are like the proportions of ingredients in baked goods (as seen in Figure \ref{fig:bakery}). More of one word and less of another word could help point us towards the type of document being analysed. 
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.45\textwidth]{image17.jpeg}
 \caption{\label{fig:bakery}Baked Goods Example}
-The proportion of ingredients leads to a different category.\cite{4}
+The proportion of ingredients leads to a different category. \cite{4}
 \end{figure}
 
-These similarities allow us to categorize and sort the documents without having to read them. We can see this graphically in Figure\ref{fig:typechart} where the three ingredients, flour, sugar, and butter, are used to find clusters of baked goods that fall under a similar category. For the MPA data, the same concept is used on hundreds of words in documents instead of just 3 ingredients in recipes.
+These similarities allow us to categorise and sort the documents without having to read them. We can see this graphically in Figure \ref{fig:typechart} where the three ingredients, flour, sugar, and butter, are used to find clusters of baked goods that fall under a similar category. For the Maine Port Authority data, the same concept is used on hundreds of words in documents instead of just 3 ingredients in a recipe.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.45\textwidth]{image18.png}
 \includegraphics[width=0.45\textwidth]{image19.png}
 \caption{\label{fig:clusterexample}Clustering Example}
-The algorithm finds the clusters, than the human identifies the category.
+The algorithm finds the clusters, then the human identifies the category.
 \end{figure}
 
-\subsection{Random Sampling}
- Given 3,000 unique documents, we can take random samples from across many folders to see that our clustering is working. We perform textual analysis on the samples with the goal of identifying and labelling the types of documents. We put our primary focus on Microsoft Word documents, since they comprise over half of the documents in the dataset. 
+\subsection{Textual Data Cleaning Methods}
+Accessing, cleaning, and analysing the data from the Google Drive required several steps. Full descriptions are in the appendix, but the essential steps are summarised here. As mentioned, we created a Pandas DataFrame of all unique files and our textual analysis focused on Word files.
 
- \subsection{Clustering Analysis}
- Tim was here.
+We used an input/output data structure in Python that allowed us to open the documents as virtual files and pull down the entire text from each of them. Because we were accessing hundreds of files on a Google Drive in rapid succession, Google identified the activity as a non-human user and blocked our attempts, so we had to insert 5-10 second lags in our code between each file query, and we saved our progress in 50-file blocks.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.45\textwidth]{image4.png}
+\caption{\label{fig:fileblocks}Sampling of Documents}
+The CSVs made to put together our sample corpus.
+\end{figure}
+
+The raw text of each file needed to be cleaned and processed in several ways. We removed individual words that are not specific to the meaning of the text, such as prepositions and helping verbs (“this”, “that”, “these”, “am”, “is”, “are”, “were”). We then reduced words to their meaningful base using a Python language library called SpaCy. \cite{6} For example, in a document containing the words “industrial”, “industry”, and “industrious”, all three would be reduced to the common base “industry” and be counted as three occurrences of that word. In that way, the prevalence of that word as an ingredient would more accurately characterise the document in our quantitative analysis.
+
+We combined all the documents into a single Pandas DataFrame, called a “corpus” of files, and produced several statistics based on the individual words, the files, and the corpus. A measurement of the frequency of a word within the entire corpus is called an Inverse Document Frequency (IDF). It is called “inverse” because it is expressed as the rarity, not the prevalence, of the word. All occurrences of a word in the corpus are assigned the same IDF. A measurement of the frequency of a word within an individual file is called the Normalized Frequency (NF). Each word in a document as an NF specific to the document.
+
+Conceptually, IDF is the rarity of an ingredient across all recipes in the cookbook, while the NF is the prevalence of an ingredient in a single recipe. Each document is then expressed as a list of words, where each word has a numerical value of (IDF x NF).
+
+\subsection{Clustering Analysis}
+With the files now in what is called “normalised vector form” we subjected them to clustering analysis. We used an algorithm from the Python Scikit-learn library called K-Means. We described vectors in 3 dimensions earlier, as a plot of points in an x-y-z space. With our vectorised documents, each word is a “dimension” so we would be talking about points in a 9,000-dimensional space, which we can’t picture in our heads, but the idea is that those points are either closer to each other or farther away from each other, based on the contents of the files.
+ 
+What we discovered from clustering the vectors was that there were, unfortunately, even more duplicate files than we originally counted. Our list of 400+ unique Word documents in .docx format turned out to be only 200 unique documents. In many cases, there were copies in 4 locations with small differences in size of 5 or 10 KB. The clustering algorithm was therefore producing many 4-document clusters (made up of identical files), and one or two clusters of 50 or 100 documents (made up of very different files). This did not meet the goal of labelling and organising files.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.45\textwidth]{image10.png}
+\caption{\label{fig:elbow1}Initial Elbow Graph}
+The elbow graph indicated 160 clusters for the full docx corpus, but with less than 500 documents, that doesn’t achieve the goal of organising the files.
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.45\textwidth]{image11.png}
+\caption{\label{fig:dupes}Duplicate Files}
+Our analysis found more duplicates with small differences in size of 5 or 10 KB.
+\end{figure}
+
+
+We eliminated these duplicates and subjected the data to the clustering algorithm again. On the new corpus of 200 documents, we had another disappointing result. The clustering approach did not find enough similarities between most documents to cluster them, and we had many clusters of 1 or 2 documents, along with a single cluster of 127 documents. The best conclusion we can draw from this is that the files are not suited to be studied as data points in a textual analysis, most likely due to the small size of the corpus, relative to real-world use cases with millions of documents.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.45\textwidth]{image12.png}
+\caption{\label{fig:elbow2}Second Elbow Graph}
+The elbow graph again indicated an unacceptably high number of clusters, over 100 clusters on 200 data points, was required to reduce error.
+\end{figure}
 
 \section{Conclusions}
 
 \subsection{Deliverables and Future Work}
 For the client we are able to give them Excel files that contain lists of duplicate files and folders. 
 
-We would continue our clustering work on other document types (pdfs, excel documents, powerpoints). This would give us the information we would need to produce a Standard Operating Procedure for future naming and storage of files.
+We would continue our clustering work on other document types (PDFs, Excel documents, PowerPoint). This would provide us with the necessary information to develop a Standard Operating Procedure for future file naming and storage.
 
-We could also build a script to allow us to reorganise and rename their files. We would want to build it to have human validation to avoid major errors in categorization. 
+We could also build a script to allow us to reorganise and rename their files. We want to build it with human validation to avoid major errors in categorisation. 
+
+\end{multicols}
+\vfill % Push bibliography to bottom of page
 
 \bibliographystyle{plainnat}
 \bibliography{DS5110}
 
+\clearpage
 
-\end{multicols}
+\section{Appendix - Textual Analysis Functions}
+
+\subsection{\texttt{extension\_sample.py}}\
+\begin{quote}
+\begin{description}
+\item[Input:] ~\\
+`unique files.csv’
+(all Google IDs and metadata, all file extensions)
+\item[Output:] ~\\
+`docx [i] [i+50].csv’ (50-file long lists of Google ID and metadata for docx extensions)
+\end{description}
+\end{quote}
+
+\subsection{\texttt{sample\_corpus.py}}
+\begin{quote}
+\begin{description}
+\item[Input:] ~\\
+`docx [i] [i+50].csv' (list of CSVs containing 50-row file ids and metadata)
+\item[Output:] ~\\
+`tokenised docx [i] [i+50].csv' (tokenised dfs of contents of 50-files each)
+\item[Methods:] ~\\
+docx\_reader(): reads file from API into a memory object\\
+word\_cleaner(): cleans and tokenises strings as lemmas\\
+tokenizer(): builds dictionary as \{google id: tokenised document as df\} pairs\\
+token\_saver(): concatenates the dictionary to a DataFrame and exports to CSV
+\end{description}
+\end{quote}
+
+\subsection{\texttt{corpus\_builder.py}}
+\begin{quote}
+\begin{description}
+\item[Input:] ~\\
+`tokenised docx [i] [i+50].csv’ (list of tokenised dfs)
+\item[Output:] ~\\
+`tokenised docx corpus.csv’ (concatenates files into a single corpus, $\sim$160,000 rows long)
+\end{description}
+\end{quote}
+
+\subsection{\texttt{corpus\_vectorizer.py}}
+\begin{quote}
+\begin{description}
+\item[Input:] ~\\
+‘tokenised docx corpus.csv’
+\item[Output:] ~\\
+‘vectorised docx corpus.csv’
+(400+ docx files in Feature Vector Form with 9,000+ token parameters)
+\end{description}
+\end{quote}
+
+\subsection{\texttt{clustering.py}}
+\begin{quote}
+\begin{description}
+\item[Input:] ~\\
+'vectorised docx corpus.csv' (vectorised documents)
+\item[Output:] ~\\
+`clustered docx vectors.csv’
+(vectorised documents with a cluster index assigned to each Google ID)
+\item[Methods:] ~\\
+elbow\_graph(): find optimal number of clusters for scikitlearn K-Means algorithm\\
+cluster\_indexer(): assign cluster numbers to documents
+\end{description}
+\end{quote}
+
 \end{document}
